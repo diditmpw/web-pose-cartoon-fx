@@ -209,6 +209,13 @@ export class PoseDetector {
     
     // Default neutral landmarks
     lms[0] = { x: 0.5, y: 0.28, z: 0, visibility: 0.99 }; // Nose
+    lms[2] = { x: 0.48, y: 0.26, z: 0, visibility: 0.99 }; // L Eye
+    lms[5] = { x: 0.52, y: 0.26, z: 0, visibility: 0.99 }; // R Eye
+    lms[7] = { x: 0.44, y: 0.27, z: 0, visibility: 0.99 }; // L Ear
+    lms[8] = { x: 0.56, y: 0.27, z: 0, visibility: 0.99 }; // R Ear
+    lms[9] = { x: 0.48, y: 0.32, z: 0, visibility: 0.99 }; // Mouth L
+    lms[10] = { x: 0.52, y: 0.32, z: 0, visibility: 0.99 }; // Mouth R
+
     lms[11] = { x: 0.38, y: 0.42, z: 0, visibility: 0.99 }; // L Shoulder
     lms[12] = { x: 0.62, y: 0.42, z: 0, visibility: 0.99 }; // R Shoulder
     lms[13] = { x: 0.32, y: 0.55, z: 0, visibility: 0.95 }; // L Elbow
@@ -226,11 +233,20 @@ export class PoseDetector {
       lms[13] = { x: 0.30, y: 0.28, z: 0, visibility: 0.99 };
       lms[14] = { x: 0.70, y: 0.28, z: 0, visibility: 0.99 };
     } else if (type === 'SAD') {
-      // Nose drops close to shoulder level, shoulders hunched narrow
+      // Nose and face drop close to shoulder level, shoulders raised / hunched
       const droop = 0.08 + Math.sin(t) * 0.01;
-      lms[0] = { x: 0.5, y: 0.38 + droop, z: 0, visibility: 0.99 }; // Nose dropped
-      lms[11] = { x: 0.45, y: 0.44, z: 0, visibility: 0.99 }; // Shoulders squeezed
-      lms[12] = { x: 0.55, y: 0.44, z: 0, visibility: 0.99 };
+      const noseY = 0.36 + droop;
+      lms[0] = { x: 0.5, y: noseY, z: 0, visibility: 0.99 }; // Nose dropped
+      lms[2] = { x: 0.48, y: noseY - 0.02, z: 0, visibility: 0.99 };
+      lms[5] = { x: 0.52, y: noseY - 0.02, z: 0, visibility: 0.99 };
+      lms[7] = { x: 0.45, y: noseY, z: 0, visibility: 0.99 };
+      lms[8] = { x: 0.55, y: noseY, z: 0, visibility: 0.99 };
+      lms[9] = { x: 0.48, y: noseY + 0.03, z: 0, visibility: 0.99 };
+      lms[10] = { x: 0.52, y: noseY + 0.03, z: 0, visibility: 0.99 };
+
+      // Raised & squeezed shoulders
+      lms[11] = { x: 0.44, y: 0.40, z: 0, visibility: 0.99 };
+      lms[12] = { x: 0.56, y: 0.40, z: 0, visibility: 0.99 };
       lms[15] = { x: 0.42, y: 0.70, z: 0, visibility: 0.95 };
       lms[16] = { x: 0.58, y: 0.70, z: 0, visibility: 0.95 };
     } else if (type === 'PUNCH') {

@@ -45,8 +45,9 @@ export class PoseAnalyzer {
     // Tunable thresholds
     this.punchVelocityThreshold = options.punchVelocityThreshold || 2.2; // normalized screen units/sec
     this.victoryWristOffset = options.victoryWristOffset || 0.10; // wrists must be at least 10% screen height above nose
-    this.sadHeadDroopThreshold = options.sadHeadDroopThreshold || 0.04; // head droop margin
-    this.slumpedShoulderWidthRatio = options.slumpedShoulderWidthRatio || 0.78; // relative to baseline
+    this.sadHeadToShoulderRatio = options.sadHeadToShoulderRatio || 0.32; // nose-to-shoulder vertical dist / shoulder width
+    this.sadShoulderElevateRatio = options.sadShoulderElevateRatio || 0.32; // ear-to-shoulder vertical dist / shoulder width
+    this.slumpedShoulderWidthRatio = options.slumpedShoulderWidthRatio || 0.82; // relative to baseline
 
     // Rolling history for 3-frame velocity calculation
     this.historyBufferSize = 5;
@@ -65,7 +66,11 @@ export class PoseAnalyzer {
       maxWristVelocity: 0,
       shoulderWidth: 0,
       headToShoulderDiff: 0,
+      headToShoulderRatio: 0,
+      earToShoulderRatio: 0,
       wristsAboveNose: false,
+      isFaceCloseToBody: false,
+      isShouldersUp: false,
       isSlumped: false,
       activePose: 'IDLE',
       punchHand: null,
@@ -99,6 +104,10 @@ export class PoseAnalyzer {
     const rightWrist = landmarks[POSE_LANDMARKS.RIGHT_WRIST];
     const leftHip = landmarks[POSE_LANDMARKS.LEFT_HIP];
     const rightHip = landmarks[POSE_LANDMARKS.RIGHT_HIP];
+    const leftEar = landmarks[POSE_LANDMARKS.LEFT_EAR];
+    const rightEar = landmarks[POSE_LANDMARKS.RIGHT_EAR];
+    const mouthLeft = landmarks[POSE_LANDMARKS.MOUTH_LEFT];
+    const mouthRight = landmarks[POSE_LANDMARKS.MOUTH_RIGHT];
 
     // Check visibility confidence
     const upperBodyVisible = 
@@ -111,10 +120,11 @@ export class PoseAnalyzer {
       return { pose: 'NONE', confidence: 0.3, metrics: this.metrics };
     }
 
-    // 1. Calculate Anatomical Distances
+    // 1. Calculate Anatomical Distances & Reference Scales
     const shoulderMidY = (leftShoulder.y + rightShoulder.y) / 2;
     const shoulderMidX = (leftShoulder.x + rightShoulder.x) / 2;
     const currentShoulderWidth = Math.hypot(leftShoulder.x - rightShoulder.x, leftShoulder.y - rightShoulder.y);
+    const refScale = Math.max(0.12, currentShoulderWidth);
     
     // Auto-calibrate neutral shoulder baseline over initial active upright frames
     if (this.calibrationFrames < 45 && currentShoulderWidth > 0.15) {
@@ -130,6 +140,26 @@ export class PoseAnalyzer {
       torsoLength = Math.max(0.2, Math.abs(hipMidY - shoulderMidY));
     }
 
+    // Facial feature midpoints & vertical offsets
+    const mouthVis = ((mouthLeft?.visibility ?? 0) + (mouthRight?.visibility ?? 0)) / 2;
+    const mouthMidY = mouthVis > 0.4 ? (mouthLeft.y + mouthRight.y) / 2 : nose.y + 0.04 * (refScale / 0.26);
+
+    const leftEarVis = (leftEar?.visibility ?? 0) > 0.4;
+    const rightEarVis = (rightEar?.visibility ?? 0) > 0.4;
+    const leftEarY = leftEarVis ? leftEar.y : nose.y - 0.02 * (refScale / 0.26);
+    const rightEarY = rightEarVis ? rightEar.y : nose.y - 0.02 * (refScale / 0.26);
+
+    // Distance metrics normalized to body scale
+    const headToShoulderDiff = shoulderMidY - nose.y; // positive when nose is higher (normal)
+    const headToShoulderRatio = headToShoulderDiff / refScale;
+    const mouthToShoulderDiff = shoulderMidY - mouthMidY;
+    const mouthToShoulderRatio = mouthToShoulderDiff / refScale;
+
+    const leftEarToShoulder = leftShoulder.y - leftEarY;
+    const rightEarToShoulder = rightShoulder.y - rightEarY;
+    const earToShoulderDist = (leftEarToShoulder + rightEarToShoulder) / 2;
+    const earToShoulderRatio = earToShoulderDist / refScale;
+
     // 2. Rolling 3-Frame Velocity Tracking for Wrists
     this._updateWristHistory(this.leftWristHistory, leftWrist, timestamp);
     this._updateWristHistory(this.rightWristHistory, rightWrist, timestamp);
@@ -143,7 +173,9 @@ export class PoseAnalyzer {
     this.metrics.rightWristVelocity = rightVelocity;
     this.metrics.maxWristVelocity = maxVelocity;
     this.metrics.shoulderWidth = currentShoulderWidth;
-    this.metrics.headToShoulderDiff = shoulderMidY - nose.y; // positive when nose is higher (normal), decreases when slumped
+    this.metrics.headToShoulderDiff = headToShoulderDiff;
+    this.metrics.headToShoulderRatio = headToShoulderRatio;
+    this.metrics.earToShoulderRatio = earToShoulderRatio;
 
     // ==========================================
     // 3. POSE LOGIC CHECKS
@@ -193,28 +225,49 @@ export class PoseAnalyzer {
     }
 
     // C) SAD / SLUMPED POSE DETECTION
-    // Nose drops down relative to shoulders (slumped head) AND shoulder width shrinks (hunched shoulders)
-    // Note: Nose.y drops towards/below shoulder.y -> (shoulderMidY - nose.y) becomes small or negative
-    const headDropped = nose.y >= (shoulderMidY - this.sadHeadDroopThreshold);
-    const shoulderHunched = currentShoulderWidth < (this.baselineShoulderWidth * this.slumpedShoulderWidthRatio) ||
-                            currentShoulderWidth < 0.19;
+    // Triggers from front view or side view via any of the following natural sad gestures:
+    // 1. Face closer to body: Nose / mouth drops down close to or below shoulder level
+    const isFaceCloseToBody = (headToShoulderRatio < this.sadHeadToShoulderRatio) ||
+                             (mouthToShoulderRatio < 0.16) ||
+                             (nose.y >= shoulderMidY - 0.05);
 
-    if (headDropped && shoulderHunched) {
+    // 2. Shoulders up / shrugged: Shoulders raised up towards ears
+    const isShouldersUp = (earToShoulderRatio < this.sadShoulderElevateRatio) ||
+                          (leftEarToShoulder / refScale < 0.22 && rightEarToShoulder / refScale < 0.22);
+
+    // 3. Slumped / Hunched shoulders: Narrowed shoulder width relative to baseline with head droop
+    const shoulderWidthRatio = currentShoulderWidth / this.baselineShoulderWidth;
+    const isSlumpedShoulders = (shoulderWidthRatio < this.slumpedShoulderWidthRatio) && (headToShoulderRatio < 0.44);
+
+    // Composite sad score
+    const headDroopScore = Math.max(0, (0.45 - headToShoulderRatio) / 0.30);
+    const shrugScore = Math.max(0, (0.48 - earToShoulderRatio) / 0.28);
+    const narrowScore = Math.max(0, (1.0 - shoulderWidthRatio) / 0.25);
+    const compositeSadScore = (headDroopScore * 0.5) + (shrugScore * 0.4) + (narrowScore * 0.3);
+
+    this.metrics.isFaceCloseToBody = isFaceCloseToBody;
+    this.metrics.isShouldersUp = isShouldersUp;
+    this.metrics.isSlumped = isFaceCloseToBody || isShouldersUp || isSlumpedShoulders;
+
+    if (isFaceCloseToBody || isShouldersUp || isSlumpedShoulders || compositeSadScore >= 0.55) {
       this.metrics.activePose = 'SAD';
-      this.metrics.isSlumped = true;
 
-      const slumpScore = (1 - (currentShoulderWidth / this.baselineShoulderWidth));
+      const confidence = Math.min(1.0, Math.max(0.6, compositeSadScore + 0.25));
       return {
         pose: 'SAD',
-        confidence: Math.min(1.0, Math.max(0.5, slumpScore + 0.3)),
+        confidence,
         droop: nose.y - shoulderMidY,
         shoulderWidth: currentShoulderWidth,
+        isFaceCloseToBody,
+        isShouldersUp,
+        isSlumpedShoulders,
         metrics: this.metrics
       };
     }
 
     // D) NEUTRAL / IDLE
     this.metrics.activePose = 'IDLE';
+    this.metrics.wristsAboveNose = false;
     return {
       pose: 'IDLE',
       confidence: 0.9,
