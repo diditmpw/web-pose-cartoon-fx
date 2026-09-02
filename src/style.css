@@ -1,0 +1,354 @@
+/* =========================================================
+   CARTOON POSE SOUNDBOARD - CLEAN MINIMAL DESIGN
+   ========================================================= */
+
+@import url('https://fonts.googleapis.com/css2?family=Bangers&family=Luckiest+Guy&family=Outfit:wght@500;700;800&display=swap');
+
+:root {
+  --yellow: #FFE600;
+  --red: #FF2A55;
+  --blue: #00D2FF;
+  --green: #00FF88;
+  --bg-dark: #0F0E17;
+  --card-bg: #1B1A26;
+  --border: 2px solid #000000;
+  --shadow: 3px 3px 0px #000000;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Outfit', sans-serif;
+  background-color: var(--bg-dark);
+  color: #FFFFFF;
+  height: 100vh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.app-layout {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  max-width: 1200px;
+  width: 100%;
+  margin: 0 auto;
+  padding: 12px 16px;
+  gap: 12px;
+}
+
+/* Header */
+.simple-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: var(--card-bg);
+  border: var(--border);
+  box-shadow: var(--shadow);
+  border-radius: 14px;
+  padding: 8px 18px;
+}
+
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.logo-emoji {
+  font-size: 1.5rem;
+}
+
+.logo-text {
+  font-family: 'Luckiest Guy', cursive;
+  font-size: 1.4rem;
+  letter-spacing: 0.5px;
+  color: var(--yellow);
+  text-shadow: 2px 2px 0 #000;
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.pill-btn {
+  background: #2D2B3D;
+  color: #FFFFFF;
+  font-family: 'Outfit', sans-serif;
+  font-weight: 700;
+  font-size: 0.9rem;
+  padding: 7px 14px;
+  border-radius: 20px;
+  border: var(--border);
+  box-shadow: 2px 2px 0 #000;
+  cursor: pointer;
+  transition: transform 0.1s, background 0.1s;
+}
+
+.pill-btn:hover {
+  transform: translate(-1px, -1px);
+  box-shadow: 3px 3px 0 #000;
+}
+
+.pill-btn:active {
+  transform: translate(1px, 1px);
+  box-shadow: 1px 1px 0 #000;
+}
+
+.pill-btn.primary {
+  background: var(--green);
+  color: #000000;
+}
+
+.pill-btn.danger {
+  background: var(--red);
+  color: #FFFFFF;
+}
+
+/* Main Viewport */
+.viewport-wrapper {
+  position: relative;
+  flex: 1;
+  background: #000000;
+  border: var(--border);
+  box-shadow: 4px 4px 0px #000000;
+  border-radius: 16px;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 0;
+}
+
+.viewport-wrapper video {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transform: scaleX(-1); /* mirror */
+  opacity: 0.92;
+}
+
+.viewport-wrapper canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 10;
+}
+
+/* Active Pose Cartoon Text Badge */
+.active-pose-badge {
+  position: absolute;
+  top: 18px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 20;
+  background: var(--yellow);
+  color: #000000;
+  border: var(--border);
+  box-shadow: var(--shadow);
+  border-radius: 40px;
+  padding: 8px 24px;
+  font-family: 'Luckiest Guy', cursive;
+  font-size: 1.6rem;
+  letter-spacing: 0.5px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  pointer-events: none;
+  transition: transform 0.2s, background 0.2s;
+  text-shadow: 1px 1px 0 rgba(255, 255, 255, 0.4);
+}
+
+.active-pose-badge.pose-SAD {
+  background: var(--blue);
+  color: #FFFFFF;
+  text-shadow: 2px 2px 0 #000;
+  transform: translateX(-50%) scale(1.05);
+}
+
+.active-pose-badge.pose-VICTORY {
+  background: var(--yellow);
+  color: #000000;
+  transform: translateX(-50%) scale(1.1);
+  animation: bounceBadge 0.5s ease infinite alternate;
+}
+
+@keyframes bounceBadge {
+  0% { transform: translateX(-50%) scale(1.05); }
+  100% { transform: translateX(-50%) scale(1.12); }
+}
+
+.active-pose-badge.pose-PUNCH {
+  background: var(--red);
+  color: #FFFFFF;
+  text-shadow: 2px 2px 0 #000;
+  transform: translateX(-50%) scale(1.15) rotate(-2deg);
+}
+
+/* Cooldown Status Tag */
+.cooldown-tag {
+  position: absolute;
+  bottom: 16px;
+  left: 16px;
+  z-index: 20;
+  background: rgba(15, 14, 23, 0.85);
+  backdrop-filter: blur(6px);
+  border: 1.5px solid #000;
+  box-shadow: 2px 2px 0 #000;
+  padding: 5px 12px;
+  border-radius: 20px;
+  font-family: 'Bangers', cursive;
+  font-size: 1.05rem;
+  letter-spacing: 0.5px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  pointer-events: none;
+}
+
+.cooldown-dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--green);
+  box-shadow: 0 0 6px var(--green);
+}
+
+.cooldown-dot.cooling {
+  background: var(--red);
+  box-shadow: 0 0 6px var(--red);
+}
+
+/* Standby Screen */
+.camera-standby {
+  position: absolute;
+  inset: 0;
+  background: rgba(15, 14, 23, 0.94);
+  z-index: 30;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+
+.standby-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  padding: 24px;
+  max-width: 480px;
+}
+
+.standby-emoji {
+  font-size: 3.5rem;
+}
+
+.standby-content h2 {
+  font-family: 'Luckiest Guy', cursive;
+  font-size: 1.8rem;
+  color: var(--yellow);
+  text-shadow: 2px 2px 0 #000;
+}
+
+.standby-content p {
+  color: #B5B2CE;
+  font-size: 0.95rem;
+  line-height: 1.4;
+}
+
+.big-start-btn {
+  background: var(--green);
+  color: #000000;
+  font-family: 'Luckiest Guy', cursive;
+  font-size: 1.3rem;
+  padding: 12px 28px;
+  border: var(--border);
+  box-shadow: var(--shadow);
+  border-radius: 14px;
+  cursor: pointer;
+  transition: transform 0.15s, box-shadow 0.15s;
+}
+
+.big-start-btn:hover {
+  transform: translate(-2px, -2px);
+  box-shadow: 5px 5px 0 #000;
+}
+
+.big-start-btn:active {
+  transform: translate(2px, 2px);
+  box-shadow: 1px 1px 0 #000;
+}
+
+/* Bottom Simple Guide */
+.simple-guide {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+}
+
+.guide-item {
+  background: var(--card-bg);
+  border: var(--border);
+  box-shadow: var(--shadow);
+  border-radius: 12px;
+  padding: 8px 14px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  transition: transform 0.15s, border-color 0.15s;
+}
+
+.guide-item.active {
+  border-color: var(--yellow);
+  background: #27253B;
+  transform: translateY(-2px);
+}
+
+.guide-emoji {
+  font-size: 1.6rem;
+  margin-right: 8px;
+}
+
+.guide-text {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+}
+
+.guide-text strong {
+  font-family: 'Luckiest Guy', cursive;
+  font-size: 0.95rem;
+  color: #FFFFFF;
+}
+
+.guide-text span {
+  font-size: 0.75rem;
+  color: #8C88A8;
+}
+
+.guide-sound {
+  font-family: 'Bangers', cursive;
+  font-size: 0.9rem;
+  color: var(--yellow);
+  background: rgba(0, 0, 0, 0.4);
+  padding: 3px 8px;
+  border-radius: 6px;
+  border: 1px solid #333;
+}
+
+@media (max-width: 768px) {
+  .simple-guide {
+    grid-template-columns: 1fr;
+  }
+}

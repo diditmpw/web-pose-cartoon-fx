@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Cartoon Pose Soundboard</title>
+  <meta name="description" content="Simple real-time body pose tracker with cartoon sound effects." />
+  
+  <!-- MediaPipe Pose Dependencies -->
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/pose/pose.js" crossorigin="anonymous"></script>
+</head>
+<body>
+  <div class="app-layout">
+    <!-- Top Bar -->
+    <header class="simple-header">
+      <div class="header-left">
+        <span class="logo-emoji">🎭</span>
+        <h1 class="logo-text">CARTOON POSE SOUNDBOARD</h1>
+      </div>
+      <div class="header-actions">
+        <button id="muteBtn" class="pill-btn" title="Toggle Sound">🔊 Sound: ON</button>
+        <button id="cameraToggleBtn" class="pill-btn primary">📹 Start Camera</button>
+      </div>
+    </header>
+
+    <!-- Main Camera & Skeleton Canvas Viewport -->
+    <div class="viewport-wrapper" id="viewportWrapper">
+      <video id="webcamVideo" playsinline muted></video>
+      <canvas id="fxCanvas"></canvas>
+
+      <!-- Active Pose Cartoon Text Overlay -->
+      <div class="active-pose-badge" id="activePoseBadge">
+        <span id="poseBadgeEmoji">⚡</span>
+        <span id="poseBadgeText">STAND IN FRONT OF CAMERA</span>
+      </div>
+
+      <!-- Cooldown Indicator -->
+      <div class="cooldown-tag" id="cooldownTag">
+        <span class="cooldown-dot" id="cooldownDot"></span>
+        <span id="cooldownText">READY</span>
+      </div>
+
+      <!-- Standby Prompt -->
+      <div class="camera-standby" id="cameraStandby">
+        <div class="standby-content">
+          <div class="standby-emoji">📹</div>
+          <h2>Enable Webcam to Track Poses</h2>
+          <p>Hit "Start Camera" above and strike poses to play sound effects!</p>
+          <button id="standbyStartBtn" class="big-start-btn">▶ START CAMERA</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Bottom Simple Pose Guide -->
+    <footer class="simple-guide">
+      <div class="guide-item" id="guideSad">
+        <span class="guide-emoji">😭</span>
+        <div class="guide-text">
+          <strong>SAD POSE</strong>
+          <span>Slump head down</span>
+        </div>
+        <span class="guide-sound">🎺 Sad Trombone</span>
+      </div>
+
+      <div class="guide-item" id="guideVictory">
+        <span class="guide-emoji">🏆</span>
+        <div class="guide-text">
+          <strong>VICTORY POSE</strong>
+          <span>Both hands high in air</span>
+        </div>
+        <span class="guide-sound">🎺 Fanfare</span>
+      </div>
+
+      <div class="guide-item" id="guidePunch">
+        <span class="guide-emoji">💥</span>
+        <div class="guide-text">
+          <strong>COMIC PUNCH</strong>
+          <span>Fast wrist strike</span>
+        </div>
+        <span class="guide-sound">💥 POW!</span>
+      </div>
+    </footer>
+  </div>
+
+  <script type="module" src="/src/main.js"></script>
+</body>
+</html>
